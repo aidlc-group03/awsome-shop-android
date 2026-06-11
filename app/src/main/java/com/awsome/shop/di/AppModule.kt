@@ -3,6 +3,7 @@ package com.awsome.shop.di
 import com.awsome.shop.BuildConfig
 import com.awsome.shop.data.remote.ApiService
 import com.awsome.shop.data.remote.AuthInterceptor
+import com.awsome.shop.data.remote.EmptyBodyInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,10 +31,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
+    fun provideOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        emptyBodyInterceptor: EmptyBodyInterceptor,
+    ): OkHttpClient {
         return OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(emptyBodyInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
