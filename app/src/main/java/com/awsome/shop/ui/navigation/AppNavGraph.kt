@@ -22,6 +22,15 @@ fun AppNavGraph(
     navController: NavHostController,
     startDestination: Route = Route.Login,
 ) {
+    // 底部导航 tab 之间切换：清栈到 Home 并保留单实例。
+    fun navigateTab(route: Route) {
+        navController.navigate(route) {
+            popUpTo(Route.Home) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -38,51 +47,59 @@ fun AppNavGraph(
 
         composable<Route.Home> {
             HomeScreen(
-                onProductClick = { productId ->
-                    navController.navigate(Route.ProductDetail(productId))
-                },
-                onPointsClick = {
-                    navController.navigate(Route.PointsCenter)
-                },
-                onNavigateToOrders = {
-                    navController.navigate(Route.Orders)
-                },
-                onNavigateToProfile = {
-                    navController.navigate(Route.Profile)
-                },
+                onProductClick = { productId -> navController.navigate(Route.ProductDetail(productId)) },
+                onNavigateToPoints = { navigateTab(Route.PointsCenter) },
+                onNavigateToOrders = { navigateTab(Route.Orders) },
+                onNavigateToProfile = { navigateTab(Route.Profile) },
             )
         }
 
         composable<Route.ProductDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<Route.ProductDetail>()
             ProductDetailScreen(
-                productId = route.productId,
                 onBack = { navController.popBackStack() },
-                onRedeem = { navController.navigate(Route.ConfirmRedemption(route.productId)) },
+                onRedeem = { navController.navigate(Route.DeliveryInfo(route.productId)) },
+            )
+        }
+
+        composable<Route.DeliveryInfo> { backStackEntry ->
+            val route = backStackEntry.toRoute<Route.DeliveryInfo>()
+            DeliveryInfoScreen(
+                onBack = { navController.popBackStack() },
+                onNext = { name, phone, address ->
+                    navController.navigate(
+                        Route.ConfirmRedemption(
+                            productId = route.productId,
+                            recipientName = name,
+                            recipientPhone = phone,
+                            recipientAddress = address,
+                        )
+                    )
+                },
             )
         }
 
         composable<Route.ConfirmRedemption> { backStackEntry ->
             val route = backStackEntry.toRoute<Route.ConfirmRedemption>()
             ConfirmRedemptionScreen(
-                productId = route.productId,
+                recipientName = route.recipientName,
+                recipientPhone = route.recipientPhone,
+                recipientAddress = route.recipientAddress,
                 onBack = { navController.popBackStack() },
-                onConfirm = { navController.navigate(Route.RedemptionSuccess) },
-                onEditAddress = { navController.navigate(Route.DeliveryInfo) },
+                onSuccess = { orderNo, orderId ->
+                    navController.navigate(Route.RedemptionSuccess(orderNo, orderId)) {
+                        popUpTo(Route.Home)
+                    }
+                },
             )
         }
 
-        composable<Route.DeliveryInfo> {
-            DeliveryInfoScreen(
-                onBack = { navController.popBackStack() },
-                onSave = { navController.popBackStack() },
-            )
-        }
-
-        composable<Route.RedemptionSuccess> {
+        composable<Route.RedemptionSuccess> { backStackEntry ->
+            val route = backStackEntry.toRoute<Route.RedemptionSuccess>()
             RedemptionSuccessScreen(
-                onViewOrder = { orderId ->
-                    navController.navigate(Route.OrderDetail(orderId)) {
+                orderNo = route.orderNo,
+                onViewOrder = {
+                    navController.navigate(Route.OrderDetail(route.orderId)) {
                         popUpTo(Route.Home)
                     }
                 },
@@ -96,43 +113,25 @@ fun AppNavGraph(
 
         composable<Route.Orders> {
             OrdersScreen(
-                onBack = { navController.popBackStack() },
-                onOrderClick = { orderId ->
-                    navController.navigate(Route.OrderDetail(orderId))
-                },
-                onNavigateToHome = {
-                    navController.navigate(Route.Home) {
-                        popUpTo(Route.Home) { inclusive = true }
-                    }
-                },
-                onNavigateToProfile = {
-                    navController.navigate(Route.Profile)
-                },
+                onOrderClick = { orderId -> navController.navigate(Route.OrderDetail(orderId)) },
+                onNavigateToHome = { navigateTab(Route.Home) },
+                onNavigateToPoints = { navigateTab(Route.PointsCenter) },
+                onNavigateToProfile = { navigateTab(Route.Profile) },
             )
         }
 
-        composable<Route.OrderDetail> { backStackEntry ->
-            val route = backStackEntry.toRoute<Route.OrderDetail>()
+        composable<Route.OrderDetail> {
             OrderDetailScreen(
-                orderId = route.orderId,
                 onBack = { navController.popBackStack() },
             )
         }
 
         composable<Route.PointsCenter> {
             PointsCenterScreen(
-                onBack = { navController.popBackStack() },
-                onPointsHistoryClick = {
-                    navController.navigate(Route.PointsHistory)
-                },
-                onNavigateToHome = {
-                    navController.navigate(Route.Home) {
-                        popUpTo(Route.Home) { inclusive = true }
-                    }
-                },
-                onNavigateToOrders = {
-                    navController.navigate(Route.Orders)
-                },
+                onPointsHistoryClick = { navController.navigate(Route.PointsHistory) },
+                onNavigateToHome = { navigateTab(Route.Home) },
+                onNavigateToOrders = { navigateTab(Route.Orders) },
+                onNavigateToProfile = { navigateTab(Route.Profile) },
             )
         }
 
@@ -144,27 +143,12 @@ fun AppNavGraph(
 
         composable<Route.Profile> {
             ProfileScreen(
-                onBack = { navController.popBackStack() },
-                onNavigateToOrders = {
-                    navController.navigate(Route.Orders)
-                },
-                onNavigateToPointsCenter = {
-                    navController.navigate(Route.PointsCenter)
-                },
-                onNavigateToPointsHistory = {
-                    navController.navigate(Route.PointsHistory)
-                },
-                onNavigateToDeliveryInfo = {
-                    navController.navigate(Route.DeliveryInfo)
-                },
+                onNavigateToHome = { navigateTab(Route.Home) },
+                onNavigateToOrders = { navigateTab(Route.Orders) },
+                onNavigateToPoints = { navigateTab(Route.PointsCenter) },
                 onLogout = {
                     navController.navigate(Route.Login) {
                         popUpTo(0) { inclusive = true }
-                    }
-                },
-                onNavigateToHome = {
-                    navController.navigate(Route.Home) {
-                        popUpTo(Route.Home) { inclusive = true }
                     }
                 },
             )

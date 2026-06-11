@@ -2,15 +2,15 @@ package com.awsome.shop.data.model
 
 import kotlinx.serialization.Serializable
 
+/**
+ * 用户模型 — 对齐后端字段。
+ */
 @Serializable
 data class User(
-    val id: String,
-    val name: String,
-    val employeeId: String,
-    val department: String,
-    val title: String,
-    val availablePoints: Int,
-    val totalEarned: Int,
-    val totalUsed: Int,
-    val redemptionCount: Int,
+    val id: Long,
+    val username: String,
+    val displayName: String = "",
+    val email: String? = null,
+    val role: String = "employee",
+    val avatarUrl: String? = null,
 )

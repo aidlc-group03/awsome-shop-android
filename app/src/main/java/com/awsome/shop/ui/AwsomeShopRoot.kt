@@ -6,10 +6,10 @@ import com.awsome.shop.ui.navigation.AppNavGraph
 import com.awsome.shop.ui.navigation.Route
 
 @Composable
-fun AwsomeShopRoot() {
+fun AwsomeShopRoot(startDestination: Route = Route.Login) {
     val navController = rememberNavController()
     AppNavGraph(
         navController = navController,
-        startDestination = Route.Login,
+        startDestination = startDestination,
     )
 }

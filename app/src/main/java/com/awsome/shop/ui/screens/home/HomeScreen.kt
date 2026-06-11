@@ -1,40 +1,31 @@
 package com.awsome.shop.ui.screens.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowForwardIos
-import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,126 +33,85 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.awsome.shop.ui.components.BottomNavBar
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.awsome.shop.data.model.Product
 import com.awsome.shop.ui.components.CategoryChip
+import com.awsome.shop.ui.components.EmptyState
+import com.awsome.shop.ui.components.ErrorRetry
+import com.awsome.shop.ui.components.LoadingState
+import com.awsome.shop.ui.components.ProductImage
+import com.awsome.shop.ui.components.clickableNoRipple
+import com.awsome.shop.ui.components.formatPoints
+import com.awsome.shop.ui.navigation.BottomNavBarHost
 import com.awsome.shop.ui.theme.Primary
 import com.awsome.shop.ui.theme.PrimaryLight
+import com.awsome.shop.ui.theme.TextPrimary
+import com.awsome.shop.ui.theme.TextSecondary
 import com.awsome.shop.ui.theme.TextWhite
+import com.awsome.shop.ui.viewmodel.HomeViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onProductClick: (String) -> Unit,
-    onPointsClick: () -> Unit,
+    onProductClick: (Long) -> Unit,
+    onNavigateToPoints: () -> Unit,
     onNavigateToOrders: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
+        topBar = { HomeAppBar() },
         bottomBar = {
-            BottomNavBar(
+            BottomNavBarHost(
                 selectedIndex = 0,
-                onItemSelected = { index ->
-                    when (index) {
-                        2 -> onNavigateToOrders()
-                        3 -> onNavigateToProfile()
-                    }
-                }
+                onNavigateToHome = {},
+                onNavigateToPoints = onNavigateToPoints,
+                onNavigateToOrders = onNavigateToOrders,
+                onNavigateToProfile = onNavigateToProfile,
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
         ) {
-            // App Bar
-            Row(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Primary)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
-                    text = "AWSome Shop",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextWhite,
+                PointsBalanceCard(onClick = onNavigateToPoints)
+
+                CategoryRow(
+                    categories = uiState.categories.map { it.name },
+                    selected = uiState.selectedCategory,
+                    onSelect = viewModel::selectCategory,
                 )
-                Row {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Rounded.Search, contentDescription = "搜索", tint = TextWhite)
+
+                when {
+                    uiState.isLoading && uiState.products.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxWidth().height(240.dp)) { LoadingState() }
                     }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Rounded.Notifications, contentDescription = "通知", tint = TextWhite)
+                    uiState.error != null && uiState.products.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
+                            ErrorRetry(message = uiState.error!!, onRetry = { viewModel.loadProducts() })
+                        }
                     }
-                }
-            }
-
-            // Points Banner
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Brush.horizontalGradient(listOf(Primary, PrimaryLight)))
-                    .clickable(onClick = onPointsClick)
-                    .padding(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column {
-                        Text("我的积分", fontSize = 12.sp, color = TextWhite.copy(alpha = 0.8f))
-                        Text("12,580", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+                    uiState.products.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
+                            EmptyState(message = "暂无商品")
+                        }
                     }
-                    Icon(Icons.Rounded.ArrowForwardIos, contentDescription = null, tint = TextWhite.copy(alpha = 0.8f), modifier = Modifier.size(20.dp))
-                }
-            }
-
-            // Category Filter
-            val categories = listOf("全部", "数码电子", "生活日用", "办公文具")
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                categories.forEachIndexed { index, cat ->
-                    CategoryChip(
-                        text = cat,
-                        selected = index == selectedTab,
-                        onClick = { selectedTab = index },
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Product Grid
-            val sampleProducts = listOf(
-                Triple("1", "Sony WH-1000XM5 降噪耳机", "2,580"),
-                Triple("2", "Apple Watch Series 9", "3,200"),
-                Triple("3", "星巴克礼品卡 200元", "680"),
-                Triple("4", "小米双肩包 都市休闲款", "450"),
-            )
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(sampleProducts) { (id, name, points) ->
-                    ProductCard(
-                        name = name,
-                        points = points,
-                        onClick = { onProductClick(id) },
-                    )
+                    else -> ProductGrid(products = uiState.products, onProductClick = onProductClick)
                 }
             }
         }
@@ -169,35 +119,133 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ProductCard(name: String, points: String, onClick: () -> Unit) {
-    Card(
+private fun HomeAppBar() {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            .background(Primary)
+            .height(56.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column {
-            Box(
+        Text("AWSome Shop", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(Icons.Rounded.Search, "搜索", tint = TextWhite, modifier = Modifier.size(24.dp))
+            Icon(Icons.Rounded.Notifications, "通知", tint = TextWhite, modifier = Modifier.size(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun PointsBalanceCard(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Brush.horizontalGradient(listOf(Primary, PrimaryLight)))
+            .clickableNoRipple(onClick)
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("我的积分", fontSize = 12.sp, color = TextWhite.copy(alpha = 0.8f))
+            Text("查看积分中心", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextWhite)
+        }
+        Icon(
+            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            null,
+            tint = TextWhite.copy(alpha = 0.8f),
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+@Composable
+private fun CategoryRow(
+    categories: List<String>,
+    selected: String?,
+    onSelect: (String?) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        CategoryChip(text = "全部", selected = selected == null, onClick = { onSelect(null) })
+        categories.forEach { name ->
+            CategoryChip(text = name, selected = selected == name, onClick = { onSelect(name) })
+        }
+    }
+}
+
+@Composable
+private fun ProductGrid(products: List<Product>, onProductClick: (Long) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        products.chunked(2).forEach { rowItems ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                rowItems.forEach { product ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        ProductCard(product = product, onClick = { onProductClick(product.id) })
+                    }
+                }
+                if (rowItems.size == 1) {
+                    Box(modifier = Modifier.weight(1f)) {}
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductCard(product: Product, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickableNoRipple(onClick),
+    ) {
+        Box {
+            ProductImage(
+                imageUrl = product.imageUrl,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Rounded.Headphones,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = Primary,
-                )
+                    .height(120.dp),
+                cornerRadius = 0,
+            )
+            if (!product.inStock) {
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(TextSecondary)
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Text("已兑完", fontSize = 11.sp, color = TextWhite)
+                }
             }
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(name, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 2)
-                Spacer(Modifier.height(8.dp))
-                Text("$points 积分", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Primary)
-            }
+        }
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = product.name,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+                maxLines = 2,
+            )
+            Text(
+                text = "${formatPoints(product.pointsPrice)} 积分",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Primary,
+            )
         }
     }
 }
