@@ -139,7 +139,7 @@ private fun TransactionItem(tx: PointsTransaction) {
             Text(tx.createdAt, fontSize = 11.sp, color = TextSecondary)
         }
         Text(
-            text = (if (isIncome) "+" else "-") + formatPoints(kotlin.math.abs(tx.points)),
+            text = (if (isIncome) "+" else "-") + formatPoints(kotlin.math.abs(tx.amount)),
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = if (isIncome) Success else Error,

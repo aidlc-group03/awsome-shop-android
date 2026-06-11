@@ -98,7 +98,7 @@ fun PointsCenterScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     HeaderStat(formatPoints(balance?.totalEarned ?: 0), "累计获得")
-                    HeaderStat(formatPoints(balance?.totalSpent ?: 0), "已使用")
+                    HeaderStat(formatPoints(balance?.totalUsed ?: 0), "已使用")
                 }
             }
 

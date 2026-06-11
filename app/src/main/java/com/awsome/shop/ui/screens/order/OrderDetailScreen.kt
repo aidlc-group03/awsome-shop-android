@@ -75,14 +75,17 @@ fun OrderDetailScreen(
                     InfoRow("订单编号", order.orderNo)
                     InfoRow("下单时间", order.createdAt)
                     InfoRow("兑换状态", OrderStatusUi.displayName(order.status))
+                    order.trackingNumber?.takeIf { it.isNotBlank() }?.let { InfoRow("物流单号", it) }
                 }
-                InfoCard("收货信息") {
-                    InfoRow("收货人", order.recipientName)
-                    InfoRow("联系电话", order.recipientPhone)
-                    InfoRow("收货地址", order.recipientAddress)
+                order.address?.let { addr ->
+                    InfoCard("收货信息") {
+                        InfoRow("收货人", addr.name)
+                        InfoRow("联系电话", addr.phone)
+                        InfoRow("收货地址", addr.fullAddress)
+                    }
                 }
                 InfoCard("积分信息") {
-                    InfoRow("商品积分", "${formatPoints(order.pointsAmount)} 积分")
+                    InfoRow("商品积分", "${formatPoints(order.points)} 积分")
                     Box(Modifier.fillMaxWidth().height(1.dp).background(Divider))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -90,7 +93,7 @@ fun OrderDetailScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text("实付积分", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                        Text("${formatPoints(order.pointsAmount)} 积分", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Primary)
+                        Text("${formatPoints(order.points)} 积分", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Primary)
                     }
                 }
             }
@@ -142,7 +145,7 @@ private fun ProductRow(order: Order) {
             modifier = Modifier.weight(1f),
             maxLines = 2,
         )
-        Text("${formatPoints(order.pointsAmount)} 积分", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Primary)
+        Text("${formatPoints(order.points)} 积分", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Primary)
     }
 }
 

@@ -111,7 +111,7 @@ fun ProfileScreen(
                 Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceAround) {
                     StatCol(formatPoints(uiState.balance?.balance ?: 0), "可用积分")
                     StatCol(formatPoints(uiState.balance?.totalEarned ?: 0), "累计获得")
-                    StatCol(formatPoints(uiState.balance?.totalSpent ?: 0), "已使用")
+                    StatCol(formatPoints(uiState.balance?.totalUsed ?: 0), "已使用")
                 }
                 Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = TextDisabled, modifier = Modifier.size(20.dp))
             }

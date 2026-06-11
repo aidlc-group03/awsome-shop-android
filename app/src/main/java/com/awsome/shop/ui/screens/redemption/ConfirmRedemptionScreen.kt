@@ -51,9 +51,10 @@ import com.awsome.shop.ui.viewmodel.RedemptionViewModel
 fun ConfirmRedemptionScreen(
     recipientName: String,
     recipientPhone: String,
-    recipientAddress: String,
+    recipientRegion: String,
+    recipientDetail: String,
     onBack: () -> Unit,
-    onSuccess: (orderNo: String, orderId: Long) -> Unit,
+    onSuccess: (orderId: Long) -> Unit,
     productViewModel: ProductDetailViewModel = hiltViewModel(),
     redemptionViewModel: RedemptionViewModel = hiltViewModel(),
 ) {
@@ -61,9 +62,10 @@ fun ConfirmRedemptionScreen(
     val redeemState by redemptionViewModel.uiState.collectAsStateWithLifecycle()
     val product = productState.product
     val context = LocalContext.current
+    val recipientAddress = listOf(recipientRegion, recipientDetail).filter { it.isNotBlank() }.joinToString(" ")
 
     LaunchedEffect(redeemState.orderResult) {
-        redeemState.orderResult?.let { onSuccess(it.orderNo, it.id) }
+        redeemState.orderResult?.let { onSuccess(it.id) }
     }
     LaunchedEffect(redeemState.error) {
         redeemState.error?.let {
@@ -85,7 +87,13 @@ fun ConfirmRedemptionScreen(
                 Button(
                     onClick = {
                         product?.let {
-                            redemptionViewModel.createOrder(it.id, recipientName, recipientPhone, recipientAddress)
+                            redemptionViewModel.createOrder(
+                                productId = it.id,
+                                recipientName = recipientName,
+                                recipientPhone = recipientPhone,
+                                recipientRegion = recipientRegion,
+                                recipientDetail = recipientDetail,
+                            )
                         }
                     },
                     enabled = product != null && !redeemState.isSubmitting,

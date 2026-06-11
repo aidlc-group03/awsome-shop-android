@@ -2,35 +2,38 @@ package com.awsome.shop.data.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * 创建订单请求 — 对齐后端字段 (BR-A3)。
- */
+/** 通用 id 请求体（商品详情/订单详情等）。 */
 @Serializable
-data class CreateOrderRequest(
+data class IdRequest(val id: Long)
+
+/** 积分兑换下单请求 — 需要收货地址 id (operatorId 由 Gateway 注入)。 */
+@Serializable
+data class CreateRedemptionRequest(
     val productId: Long,
-    val quantity: Int = 1,
-    val recipientName: String,
-    val recipientPhone: String,
-    val recipientAddress: String,
+    val addressId: Long,
 )
 
-/**
- * 商品列表分页请求 (BR-A2.5)。
- */
+/** 商品列表分页请求 (BR-A2.5)。 */
 @Serializable
 data class ListProductRequest(
-    val category: String? = null,
-    val keyword: String? = null,
     val page: Int = 1,
-    val size: Int = 20,
+    val size: Int = 10,
+    val name: String? = null,
+    val category: String? = null,
 )
 
-/**
- * 订单列表分页请求 (BR-A4.3)。
- */
+/** 订单列表分页请求 (BR-A4.3)。status: PENDING/SHIPPED/COMPLETED/CANCELLED。 */
 @Serializable
-data class ListOrderRequest(
+data class OrderListRequest(
+    val page: Int = 1,
+    val size: Int = 10,
     val status: String? = null,
+)
+
+/** 积分交易记录查询请求 (BR-A5.4)。 */
+@Serializable
+data class TransactionQueryRequest(
     val page: Int = 1,
     val size: Int = 20,
+    val type: String? = null,
 )

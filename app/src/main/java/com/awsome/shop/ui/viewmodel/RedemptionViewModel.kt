@@ -2,7 +2,8 @@ package com.awsome.shop.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.awsome.shop.data.model.CreateOrderRequest
+import com.awsome.shop.data.model.AddressRequest
+import com.awsome.shop.data.model.CreateRedemptionRequest
 import com.awsome.shop.data.model.Order
 import com.awsome.shop.data.remote.toUserMessage
 import com.awsome.shop.data.repository.ShopRepository
@@ -15,7 +16,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 兑换 ViewModel (BR-A3：创建订单 + 防重复提交)。
+ * 兑换 ViewModel (BR-A3：创建地址 → 创建订单 + 防重复提交)。
+ *
+ * 后端下单需要 addressId，因此先调用收货地址 create 拿到 id，再创建兑换订单。
  */
 @HiltViewModel
 class RedemptionViewModel @Inject constructor(
@@ -35,23 +38,31 @@ class RedemptionViewModel @Inject constructor(
         productId: Long,
         recipientName: String,
         recipientPhone: String,
-        recipientAddress: String,
-        quantity: Int = 1,
+        recipientRegion: String,
+        recipientDetail: String,
     ) {
         // 防重复提交 (BR-A3.4)。
         if (_uiState.value.isSubmitting) return
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true, error = null) }
-            shopRepository.createOrder(
-                CreateOrderRequest(
-                    productId = productId,
-                    quantity = quantity,
-                    recipientName = recipientName,
-                    recipientPhone = recipientPhone,
-                    recipientAddress = recipientAddress,
+            // 1) 创建收货地址，拿到 addressId
+            shopRepository.createAddress(
+                AddressRequest(
+                    name = recipientName,
+                    phone = recipientPhone,
+                    region = recipientRegion,
+                    detail = recipientDetail,
+                    isDefault = false,
                 )
-            ).onSuccess { order ->
-                _uiState.update { it.copy(isSubmitting = false, orderResult = order) }
+            ).onSuccess { address ->
+                // 2) 用 addressId 创建兑换订单
+                shopRepository.createOrder(CreateRedemptionRequest(productId = productId, addressId = address.id))
+                    .onSuccess { order ->
+                        _uiState.update { it.copy(isSubmitting = false, orderResult = order) }
+                    }
+                    .onFailure { e ->
+                        _uiState.update { it.copy(isSubmitting = false, error = e.toUserMessage()) }
+                    }
             }.onFailure { e ->
                 _uiState.update { it.copy(isSubmitting = false, error = e.toUserMessage()) }
             }

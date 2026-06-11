@@ -40,7 +40,7 @@ import com.awsome.shop.ui.theme.TextWhite
 
 @Composable
 fun RedemptionSuccessScreen(
-    orderNo: String,
+    orderId: Long,
     onViewOrder: () -> Unit,
     onContinueShopping: () -> Unit,
 ) {
@@ -85,8 +85,8 @@ fun RedemptionSuccessScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                SuccessRow("订单编号", orderNo)
-                SuccessRow("兑换状态", "待确认")
+                SuccessRow("订单编号", "#$orderId")
+                SuccessRow("兑换状态", "待发货")
             }
 
             Column(

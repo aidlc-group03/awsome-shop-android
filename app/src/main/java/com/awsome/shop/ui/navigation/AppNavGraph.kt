@@ -66,13 +66,14 @@ fun AppNavGraph(
             val route = backStackEntry.toRoute<Route.DeliveryInfo>()
             DeliveryInfoScreen(
                 onBack = { navController.popBackStack() },
-                onNext = { name, phone, address ->
+                onNext = { name, phone, region, detail ->
                     navController.navigate(
                         Route.ConfirmRedemption(
                             productId = route.productId,
                             recipientName = name,
                             recipientPhone = phone,
-                            recipientAddress = address,
+                            recipientRegion = region,
+                            recipientDetail = detail,
                         )
                     )
                 },
@@ -84,10 +85,11 @@ fun AppNavGraph(
             ConfirmRedemptionScreen(
                 recipientName = route.recipientName,
                 recipientPhone = route.recipientPhone,
-                recipientAddress = route.recipientAddress,
+                recipientRegion = route.recipientRegion,
+                recipientDetail = route.recipientDetail,
                 onBack = { navController.popBackStack() },
-                onSuccess = { orderNo, orderId ->
-                    navController.navigate(Route.RedemptionSuccess(orderNo, orderId)) {
+                onSuccess = { orderId ->
+                    navController.navigate(Route.RedemptionSuccess(orderId)) {
                         popUpTo(Route.Home)
                     }
                 },
@@ -97,7 +99,7 @@ fun AppNavGraph(
         composable<Route.RedemptionSuccess> { backStackEntry ->
             val route = backStackEntry.toRoute<Route.RedemptionSuccess>()
             RedemptionSuccessScreen(
-                orderNo = route.orderNo,
+                orderId = route.orderId,
                 onViewOrder = {
                     navController.navigate(Route.OrderDetail(route.orderId)) {
                         popUpTo(Route.Home)

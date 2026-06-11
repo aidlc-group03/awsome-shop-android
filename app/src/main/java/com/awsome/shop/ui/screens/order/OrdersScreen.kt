@@ -170,7 +170,7 @@ private fun OrderCard(order: Order, onClick: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(order.productName, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimary, maxLines = 2)
-                Text("${formatPoints(order.pointsAmount)} 积分", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Primary)
+                Text("${formatPoints(order.points)} 积分", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Primary)
             }
         }
     }

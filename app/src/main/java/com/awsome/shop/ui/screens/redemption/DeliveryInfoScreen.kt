@@ -42,7 +42,7 @@ import com.awsome.shop.ui.theme.TextWhite
 @Composable
 fun DeliveryInfoScreen(
     onBack: () -> Unit,
-    onNext: (name: String, phone: String, address: String) -> Unit,
+    onNext: (name: String, phone: String, region: String, detail: String) -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -54,11 +54,11 @@ fun DeliveryInfoScreen(
         when {
             name.isBlank() -> error = "请输入收货人姓名"
             !phone.matches(Regex("^\\d{11}$")) -> error = "请输入正确的 11 位手机号"
+            region.isBlank() -> error = "请输入所在地区"
             detail.isBlank() -> error = "请输入详细地址"
             else -> {
                 error = null
-                val fullAddress = listOf(region.trim(), detail.trim()).filter { it.isNotEmpty() }.joinToString(" ")
-                onNext(name.trim(), phone.trim(), fullAddress)
+                onNext(name.trim(), phone.trim(), region.trim(), detail.trim())
             }
         }
     }

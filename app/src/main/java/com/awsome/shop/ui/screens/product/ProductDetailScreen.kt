@@ -119,8 +119,8 @@ private fun ProductContent(product: Product, modifier: Modifier) {
         }
 
         // 规格卡
-        val specs = product.specs.orEmpty()
-        if (specs.isNotEmpty() || product.brand != null) {
+        val specEntries = product.specEntries
+        if (specEntries.isNotEmpty() || product.brand != null) {
             Column(
                 modifier = Modifier.fillMaxWidth().background(BgWhite).padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -129,7 +129,7 @@ private fun ProductContent(product: Product, modifier: Modifier) {
                 product.brand?.takeIf { it.isNotBlank() }?.let { SpecRow("品牌", it) }
                 product.sku.takeIf { it.isNotBlank() }?.let { SpecRow("型号", it) }
                 product.colors?.takeIf { it.isNotBlank() }?.let { SpecRow("颜色", it) }
-                specs.forEach { SpecRow(it.key, it.value) }
+                specEntries.forEach { (k, v) -> SpecRow(k, v) }
             }
         }
 

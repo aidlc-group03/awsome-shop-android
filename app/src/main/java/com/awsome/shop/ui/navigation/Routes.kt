@@ -23,12 +23,12 @@ sealed interface Route {
         val productId: Long,
         val recipientName: String,
         val recipientPhone: String,
-        val recipientAddress: String,
+        val recipientRegion: String,
+        val recipientDetail: String,
     ) : Route
 
-    /** 兑换成功页，携带订单号与订单 id（用于跳详情）。 */
+    /** 兑换成功页，携带订单 id（用于跳详情/展示订单号）。 */
     @Serializable data class RedemptionSuccess(
-        val orderNo: String,
         val orderId: Long,
     ) : Route
 
